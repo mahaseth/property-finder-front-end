@@ -26,42 +26,43 @@ export function stopRecording(recorder) {
 
 export async function sendAudioToBackend(audioBlob) {
   const formData = new FormData();
-  formData.append("file", audioBlob, "voice.wav");
+  formData.append('file', audioBlob, 'userAudio.wav');
 
-  try {
-    const response = await fetch("http://localhost:8000/upload_audio", {
-      method: "POST",
-      body: formData,
-    });
+  // const response = await fetch('http://127.0.0.1:8000/process-audio', {
+  //   method: 'POST',
+  //   body: formData,
+  // });
 
-    if (!response.ok) {
-      throw new Error(`Backend error ${response.status}`);
-    }
+  const response = await fetch('http://127.0.0.1:8000', {
+    method: 'GET'
+  });
 
-    const result = await response.json();
 
-    if (!result.audio_url) {
-      throw new Error("Missing audio_url in backend response.");
-    }
-
-    return result; // { transcription, extracted, reply_text, audio_url }
-
-  } catch (error) {
-    console.error("❌ Backend unavailable or failed:", error.message);
-    return {
-      error: true,
-      message: "Backend unavailable. Please try again later.",
-    };
+  if (!response.ok) {
+    console.error("❌ Backend processing failed");
+    throw new Error("Backend error");
   }
+
+  const result = await response.json();
+  console.log("✅ Backend response:", result);
+
+  // Compose audio URL to play
+  const audioFileUrl = `http://127.0.0.1:8000/audio/${result.audio_file}`;
+  return audioFileUrl;
 }
 
+
+
+
+
+// Play audio from a given URL once and resolve only after playback completes
 export async function playAudioFromUrl(audioUrl) {
   return new Promise((resolve, reject) => {
     const audio = new Audio(audioUrl);
 
     audio.onended = () => {
       console.log("✅ Audio playback finished.");
-      resolve();
+      resolve(); // Only then continue to next recording cycle
     };
 
     audio.onerror = (e) => {
@@ -69,9 +70,11 @@ export async function playAudioFromUrl(audioUrl) {
       reject(new Error("Failed to load audio"));
     };
 
+    // Attempt to play audio
     audio.play().catch((err) => {
       console.error("❌ Playback failed:", err);
       reject(err);
     });
   });
 }
+
