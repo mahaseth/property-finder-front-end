@@ -52,7 +52,7 @@ function VoiceChatScreen({ onEndChat }) {
       console.log("🗣️ Bot Reply:", response.reply_text);
 
       if (response.audio_url) {
-        await playAudioFromUrl(`http://localhost:8000${response.audio_url}`);
+        await playAudioFromUrl(`http://127.0.0.1:8000/${response.audio_url}`);
       }
 
       setIsBotReplying(false);
